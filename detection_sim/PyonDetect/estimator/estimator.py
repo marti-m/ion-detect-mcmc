@@ -242,7 +242,9 @@ class EntropyGainEstimator(Estimator):
     def get_entropy(self, p_1, p_2):
         # the entropy is a measure for the randomness/uncertainty of an outcome/observation
         # For a discrete probability distribution with m outcomes, the entropy is maximized for a uniform distribution (e.g P(x) = 1 / m for all x in (1, ..., m))
-        return -(p_1 * np.log(p_1) + p_2 * np.log(p_2))
+
+        eps = np.finfo('float').eps
+        return -(p_1 * np.log(p_1 + eps) + p_2 * np.log(p_2 + eps))
     
     def get_probabilities(self, p_1, p_2):
         s = p_1 + p_2
@@ -270,7 +272,7 @@ class EntropyGainEstimator(Estimator):
             
             #calculate the entropies:
             H_i = self.get_entropy(p_d_i, p_b_i)
-            H_pi_i = self.get_entropy(p_d_pi_i, p_d_pi_i)
+            H_pi_i = self.get_entropy(p_d_pi_i, p_b_pi_i)
             
             # H_diff_tot is wighted by P("i photon counts") = P("i photon counts" | |bright>) + P("i photon counts" | |dark>)
             H_diff_tot+= (H_pi_i - H_i) * (poisson.pmf(i, mean_b) + poisson.pmf(i, mean_d))
