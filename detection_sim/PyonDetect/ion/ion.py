@@ -136,5 +136,5 @@ class BerylliumIon(Ion):
             
         if verbose:
             print(self.poisson_mu)
-        self.__n_photons_after_update = np.random.poisson(self.poisson_mu)
+        self.n_photons_after_update = np.random.poisson(self.poisson_mu)
         
