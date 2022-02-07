@@ -3,7 +3,7 @@ import numpy as np
 
 class Estimator:
     
-    def __init__(self):
+    def __init__(self, save_trajectory=False):
         self.prediction = None
         self.ready = False
         self.n_photons_tot = 0
@@ -12,12 +12,23 @@ class Estimator:
         self.pi_pulse = False
         
         self.estimator_type = "PrototypeEstimator"
+        
+        self.save_trajectory = save_trajectory
+        if self.save_trajectory:
+            trajectory = { 'n_photons_subbin' : []}
+        
+        
+        
 
     def predict(self):
         return self.prediction
     
     def update_subbin_photon_counts(self, n_photons):
         self.n_photons_subbin += n_photons
+        
+        if self.save_trajectory:
+            self.update_trajectory()
+        
         
 
     def update_prediction(self, dt_subbin):
@@ -27,6 +38,9 @@ class Estimator:
         
     def get_if_ready(self):
         return self.ready
+    
+    def update_trajectory(self):
+        self.trajectory['n_photons_subbin'] = np.append(self.trajectory['n_photons_subbin'], self.n_photons_subbin)
     
     def get_is_pi_pulse_needed(self):
         return self.pi_pulse
@@ -48,21 +62,21 @@ class Estimator:
         self.prediction = None
         self.ready = False
         
-class ThresholdingEstimator(Estimator):
+class ThresholdingEstimator(Estimator, save_trajectory=False):
     def __init__(self, threshold, t_bin):
-        super().__init__()
+        super().__init__(save_trajectory)
         self.threshold = threshold
         
         self.t = 0
         self.t_bin = t_bin
         
         self.estimator_type = "Thresholdig"
+        
 
     def update_prediction(self, dt_subbin):
         self.t += dt_subbin
         
         self.n_photons_tot += self.n_photons_subbin
-        
         
         if (self.t >= self.t_bin):
             if (self.n_photons_tot > self.threshold):
@@ -70,6 +84,9 @@ class ThresholdingEstimator(Estimator):
             else:
                 self.prediction = 1
             self.ready = True
+            
+        if self.save_trajectory:
+            self.update_trajectory()
             
         self.n_photons_subbin = 0
         
@@ -100,6 +117,9 @@ class AdaptiveMLEstimator(Estimator):
         self.n_subbins_max = n_subbins_max
         self.n_subbins = 0
         
+        if self.save_trajectory:
+            self.trajectory['p_b'] = []
+        
         self.estimator_type = "AdaptiveML"
         
         
@@ -115,6 +135,7 @@ class AdaptiveMLEstimator(Estimator):
             self.n_subbins+=1
             # update photon tally
             self.n_photons_tot += self.n_photons_subbin
+ 
             # update likelihoods
             self.update_likelihoods(self.n_photons_subbin, dt_subbin)
             #evaluate errors
@@ -134,6 +155,9 @@ class AdaptiveMLEstimator(Estimator):
                     self.prediction = 1
                 else:
                     self.prediction = 0
+                    
+            if self.save_trajectory:
+                self.update_trajectory()
             
             self.n_photons_subbin = 0
                 
@@ -142,6 +166,11 @@ class AdaptiveMLEstimator(Estimator):
                     'n_subbins': self.n_subbins,
                     'n_photons_tot': self.n_photons_tot}
         return stats
+    
+    def update_trajectory(self):
+        self.trajectory['n_photons_subbin'] = np.append(self.trajectory['n_photons_subbin'], self.n_photons_subbin)
+        sum_p = self.p_b + self.p_d
+        self.trajectory['n_photons_subbin'] = np.append(self.trajectory['n_photons_subbin'], self.n_photons_subbin)
     
     def reset(self):
         self.ready = False

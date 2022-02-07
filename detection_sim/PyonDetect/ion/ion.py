@@ -2,7 +2,7 @@ import random
 import numpy as np
 
 class Ion:
-    def __init__(self, initial_state, R_dark, R_bright):
+    def __init__(self, initial_state, R_dark, R_bright:
         self.state = initial_state
         self.init_state = initial_state
         self.R_dark = R_dark
@@ -10,6 +10,7 @@ class Ion:
         self.poisson_mu = 0
         
         self.n_photons_after_update = 0
+        
 
     def get_photon_counts(self, verbose=False):
         if verbose:
