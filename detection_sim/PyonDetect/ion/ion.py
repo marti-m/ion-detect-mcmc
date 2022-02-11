@@ -2,13 +2,12 @@ import random
 import numpy as np
 
 class Ion:
-    def __init__(self, initial_state, R_dark, R_bright:
+    def __init__(self, initial_state, R_dark, R_bright):
         self.state = initial_state
         self.init_state = initial_state
         self.R_dark = R_dark
         self.R_bright= R_bright
-        self.poisson_mu = 0
-        
+        self.poisson_mu = 0   
         self.n_photons_after_update = 0
         
 
@@ -37,7 +36,7 @@ class Ion:
             # backround photon counts that are always present
             self.poisson_mu += self.R_dark * dt
             # check if in fluorescing state
-            if self.state == 1:
+            if self.state == 0:
                 self.poisson_mu+= self.R_bright * dt
             t+=dt
             

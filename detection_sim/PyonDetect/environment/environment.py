@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import time
+import json
 
 class SimulationEnvironment():
     
@@ -21,13 +23,22 @@ class SimulationEnvironment():
             
         # build result dictionary
         self.__stats = {}
+        self.__trajectories = {}
+        
+        # histogram array
+        self._hist_arr = None
         
         for i, estimator in enumerate(self.__estimators_unique):
             stats_i = estimator.get_stats()
-            if verbose:
+            if self.__verbose:
                 print(stats_i)
             for key in stats_i.keys():
                 self.__stats[key + "_" + str(i)] = np.array([])
+                
+            trajectories_i = estimator.get_trajectory()
+            if trajectories_i is not None:
+                for key in trajectories_i.keys():
+                    self.__trajectories[key + "_" + str(i)] = []
         
         self.n_repetition = n_repetition
         
@@ -88,20 +99,46 @@ class SimulationEnvironment():
             stats_i = estimator.get_stats()
             for key in stats_i.keys():
                 self.__stats[key + "_" + str(i)] = np.append(self.__stats[key + "_" + str(i)], stats_i[key])
-                estimator.reset()
                 
+                
+            trajectories_i = estimator.get_trajectory()
+            if trajectories_i is not None:
+                for key in trajectories_i.keys():
+                    self.__trajectories[key + "_" + str(i)].append(trajectories_i[key])
+                    
+            estimator.reset()
         # also reset the ion (re-initialization)    
         for ion in self.__ions_unique:
             ion.reset()
             
-    def repeat_single_shots(self):
+    def run(self):
         for i in range(self.n_repetition):
             self.single_shot()
         
+        self._bin_trajectories()
         self.ready = True
+        
+    def _bin_trajectories(self):
+        # the subbin photon count should uniquely determine trajectories,
+        # as the estimator is deterministic with respect to the photon counts
+        trj = self.__trajectories['n_photons_subbin_0']
+        # hash the numpy arrays of the subbin photon count to get a unique identifier
+        trj_hash = np.array([hash(trj_i.tobytes()) for trj_i in trj])
+
+        # get unique hashes and counts, and sort them
+        unique, counts = np.unique(trj_hash, return_counts=True)
+        # get example index of trajectory for each unique value
+        ex_idx = np.array([np.min(np.argwhere(trj_hash == hash_i)) for hash_i in unique])
+        hist_arr = np.column_stack((counts, unique, ex_idx))
+        # sort by frequency
+        arg_sort = np.flip(np.argsort(hist_arr[:, 0]))
+        self._hist_arr = hist_arr[arg_sort, :]
         
     def get_stats(self):
         return self.__stats
+    
+    def get_trajectories(self):
+        return self.__trajectories
     
     def save_to_csv(self, path=None):
         if self.ready:
@@ -113,13 +150,29 @@ class SimulationEnvironment():
                 # save to local directory
                 path = "./"
                 
-            filename = f"t_subbin={self.subbin_time}_n_subbins={self.n_subbins}.csv"
-            df.to_csv(path + filename)
-                
-            
-            
+            filename = f"n_subbins={self.n_subbins}.csv"
+            df.to_csv(path + filename)        
         else:
             print("The simulation environment has not terminated")
+            
+    def save_to_json(self, path=None):
+        assert self._hist_arr is not None, "Environment has not finished yet"
+        dict_tot = {}
+        for i, idx in enumerate(self._hist_arr[:, 2]):
+            dict_i = {}
+            dict_i['probability'] = self._hist_arr[i, 0] / self.n_repetition
+            for key in self.__trajectories.keys():
+                dict_i[key] = self.__trajectories[key][idx].tolist()
+            dict_tot[str(i)] = dict_i
+            
+        if path is None:
+                # save to local directory
+                path = "./"
+        filename = f"n_subbins={self.n_subbins}.json"
+
+        with open(path + filename, 'w') as f:
+            json.dump(json.dumps(dict_tot, indent=1), f)
+        
             
     def set_p_pi_pulse(self, p_pi_pulse):
         self.__p_pi_pulse = p_pi_pulse

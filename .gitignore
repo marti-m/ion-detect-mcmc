@@ -44,3 +44,4 @@ venv.bak/
 *.png
 # raw data
 *.csv
+*.json
