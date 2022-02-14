@@ -119,20 +119,21 @@ class SimulationEnvironment():
         self.ready = True
         
     def _bin_trajectories(self):
-        # the subbin photon count should uniquely determine trajectories,
-        # as the estimator is deterministic with respect to the photon counts
-        trj = self.__trajectories['n_photons_subbin_0']
-        # hash the numpy arrays of the subbin photon count to get a unique identifier
-        trj_hash = np.array([hash(trj_i.tobytes()) for trj_i in trj])
+        if 'n_photons_subbin_0' in self.__trajectories.keys():
+            # the subbin photon count should uniquely determine trajectories,
+            # as the estimator is deterministic with respect to the photon counts
+            trj = self.__trajectories['n_photons_subbin_0']
+            # hash the numpy arrays of the subbin photon count to get a unique identifier
+            trj_hash = np.array([hash(trj_i.tobytes()) for trj_i in trj])
 
-        # get unique hashes and counts, and sort them
-        unique, counts = np.unique(trj_hash, return_counts=True)
-        # get example index of trajectory for each unique value
-        ex_idx = np.array([np.min(np.argwhere(trj_hash == hash_i)) for hash_i in unique])
-        hist_arr = np.column_stack((counts, unique, ex_idx))
-        # sort by frequency
-        arg_sort = np.flip(np.argsort(hist_arr[:, 0]))
-        self._hist_arr = hist_arr[arg_sort, :]
+            # get unique hashes and counts, and sort them
+            unique, counts = np.unique(trj_hash, return_counts=True)
+            # get example index of trajectory for each unique value
+            ex_idx = np.array([np.min(np.argwhere(trj_hash == hash_i)) for hash_i in unique])
+            hist_arr = np.column_stack((counts, unique, ex_idx))
+            # sort by frequency
+            arg_sort = np.flip(np.argsort(hist_arr[:, 0]))
+            self._hist_arr = hist_arr[arg_sort, :]
         
     def get_stats(self):
         return self.__stats

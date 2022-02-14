@@ -34,7 +34,8 @@ class Estimator:
         return self.ready
     
     def update_trajectory(self):
-        self.trajectory['n_photons_subbin'] = np.append(self.trajectory['n_photons_subbin'], self.n_photons_subbin)
+        if self.save_trajectory:
+            self.trajectory['n_photons_subbin'] = np.append(self.trajectory['n_photons_subbin'], self.n_photons_subbin)
     
     def get_is_pi_pulse_needed(self):
         return self.pi_pulse
@@ -328,8 +329,9 @@ class EntropyGainEstimator(Estimator):
             self.pi_pulse = False
             
     def pi_pulse_applied(self):
-        self.n_pi_pulses+= 1
-        self.state_flipped = not self.state_flipped
+        if not self.ready:
+            self.n_pi_pulses+= 1
+            self.state_flipped = not self.state_flipped
     
             
     def update_prediction(self, dt_subbin):
@@ -385,6 +387,126 @@ class EntropyGainEstimator(Estimator):
     
     
     
+    def reset(self):
+        self.ready = False
+        self.prediction = None
+        self.pi_pulse = False
+        
+        self.p_b = 1
+        self.p_d = 1
+        self.state_flipped = False
+        
+        self.n_subbins = 0
+        self.n_pi_pulses = 0
+        self.n_photons_tot = 0
+        
+        if self.save_trajectory:
+            self.trajectory['p_b'] = []
+            self.trajectory['n_photons_subbin'] = []
+            self.trajectory['pi_pulse'] = []
+
+class MinExpectedBinsEstimator(Estimator):
+    def __init__(self, R_D, R_B, e_c, n_subbins_max, save_trajectory=False):
+        super().__init__(save_trajectory=save_trajectory)
+        self.R_D = R_D
+        self.R_B = R_B
+        self.p_b = 0.5
+        self.p_d = 0.5
+        self.e_c = e_c
+
+        self.n_subbins_max = n_subbins_max
+        self.n_subbins = 0
+
+        self.state_flipped = False
+
+        self.pi_pulse = False
+        self.n_pi_pulses = 0
+        
+        if self.save_trajectory:
+            self.trajectory['p_b'] = []
+            self.trajectory['n_photons_subbin'] = []
+            self.trajectory['pi_pulse'] = []
+
+
+    def update_likelihoods(self, n_photons, dt):
+        mean_b = (self.R_D + self.R_B) * dt
+        mean_d = self.R_D * dt
+        if not self.state_flipped:
+            self.p_b *= poisson.pmf(n_photons, mean_b)
+            self.p_d *= poisson.pmf(n_photons, mean_d)
+        else:
+            self.p_b *= poisson.pmf(n_photons, mean_d)
+            self.p_d *= poisson.pmf(n_photons, mean_b)
+
+    def is_pi_pulse_needed(self):
+        if self.state_flipped:
+            p_currently_dark = self.p_b
+            p_currently_bright = self.p_d
+        else:
+            p_currently_dark = self.p_d
+            p_currently_bright = self.p_b
+
+        if p_currently_dark > p_currently_bright:
+            self.pi_pulse = True
+        else:
+            self.pi_pulse = False
+
+    def update_prediction(self, dt_subbin):
+        # only update if not ready, this is relevant for later simulations were multiple estimators can run in an simulation environment
+        if not self.ready:
+            # count bin
+            self.n_subbins+=1
+            
+            # update photon tally
+            self.n_photons_tot += self.n_photons_subbin
+            # update likelihoods
+            self.update_likelihoods(self.n_photons_subbin, dt_subbin)
+            #evaluate errors
+            sum_p = self.p_b + self.p_d
+            e_d = self.p_b / sum_p
+            e_b = self.p_d / sum_p
+            # check if threshold met
+            if min(e_d, e_b) < self.e_c:
+                self.ready = True
+                if (self.p_d > self.p_b):
+                    self.prediction = 1
+                else:
+                    self.prediction = 0
+            else:
+                # check if the entropy of the likelihood function averaged over all/most future outcomes is greater if we applied a Pi pulse
+                self.is_pi_pulse_needed()
+            
+            if (self.n_subbins >= self.n_subbins_max):
+                self.ready = True
+                if (self.p_d > self.p_b):
+                    self.prediction = 1
+                else:
+                    self.prediction = 0
+            # update trajectory
+            if self.save_trajectory:
+                self.update_trajectory()
+
+            # set subbin photon count to 0 for next bin
+            self.n_photons_subbin = 0
+
+    def pi_pulse_applied(self):
+        if not self.ready:
+            self.n_pi_pulses+= 1
+            self.state_flipped = not self.state_flipped
+
+    def update_trajectory(self):
+        self.trajectory['n_photons_subbin'] = np.append(self.trajectory['n_photons_subbin'], self.n_photons_subbin)
+        sum_p = self.p_b + self.p_d
+        self.trajectory['p_b'] = np.append(self.trajectory['p_b'], self.p_b / sum_p)
+        self.trajectory['pi_pulse'] = np.append(self.trajectory['pi_pulse'], self.pi_pulse)
+        
+    def get_stats(self):
+        stats = {'prediction': self.prediction,
+                 'n_subbins' : self.n_subbins,
+                 'n_pi_pulses' : self.n_pi_pulses,
+                 'n_photons_tot' : self.n_photons_tot}
+        return stats
+
     def reset(self):
         self.ready = False
         self.prediction = None
