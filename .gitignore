@@ -45,3 +45,6 @@ venv.bak/
 # raw data
 *.csv
 *.json
+
+# pdfs
+*.pdf

@@ -1,4 +1,4 @@
-from scipy.stats import poisson
+from scipy.stats import poisson, entropy
 import numpy as np
 
 class Estimator:
@@ -287,9 +287,7 @@ class EntropyGainEstimator(Estimator):
     def get_entropy(self, p_1, p_2):
         # the entropy is a measure for the randomness/uncertainty of an outcome/observation
         # For a discrete probability distribution with m outcomes, the entropy is maximized for a uniform distribution (e.g P(x) = 1 / m for all x in (1, ..., m))
-
-        eps = np.finfo('float').eps
-        return -(p_1 * np.log(p_1 + eps) + p_2 * np.log(p_2 + eps))
+        return entropy([p_1, p_2])
     
     def get_probabilities(self, p_1, p_2):
         s = p_1 + p_2
