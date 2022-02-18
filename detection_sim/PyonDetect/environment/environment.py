@@ -5,7 +5,7 @@ import json
 
 class SimulationEnvironment():
     
-    def __init__(self, ion_list, estimator_list, detection_time=200, n_subbins = 5, n_repetition=100, verbose=False):
+    def __init__(self, ion_list, estimator_list, detection_time=200, n_subbins = 5, n_repetition=100, p_pi_success=1, verbose=False):
         assert len(ion_list) != 0, "Need to pass more than one ion to the environment"
         assert len(estimator_list) != 0, "Need to pass more than estimator to the environment"
         assert len(ion_list) == len(estimator_list), "Ions and estimators need to be paired in the list!"
@@ -46,7 +46,7 @@ class SimulationEnvironment():
         self.n_subbins = n_subbins
         
         self.ready = False
-        self.__p_pi_pulse = 1
+        self.__p_pi_pulse = p_pi_success
         
     def __unique_instances(self, list_instances):
         unique_instances = []
@@ -151,7 +151,7 @@ class SimulationEnvironment():
                 # save to local directory
                 path = "./"
                 
-            filename = f"n_subbins={self.n_subbins}.csv"
+            filename = f"n_subbins={self.n_subbins}_p_pi_suc={self.__p_pi_pulse:.5f}.csv"
             df.to_csv(path + filename)        
         else:
             print("The simulation environment has not terminated")
@@ -169,7 +169,7 @@ class SimulationEnvironment():
         if path is None:
                 # save to local directory
                 path = "./"
-        filename = f"n_subbins={self.n_subbins}.json"
+        filename = f"n_subbins={self.n_subbins}_p_pi_suc={self.__p_pi_pulse:.5f}.json"
 
         with open(path + filename, 'w') as f:
             json.dump(json.dumps(dict_tot, indent=1), f)

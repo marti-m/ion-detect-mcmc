@@ -23,6 +23,9 @@ class Ion:
             rand = random.random()
             if (rand < p_success):
                 self.state = 1 - self.state
+                return True
+            else:
+                return False
 
 
     def update_ion(self, bin_time, dt, verbose=False):
