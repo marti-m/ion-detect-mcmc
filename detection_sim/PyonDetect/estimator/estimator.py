@@ -66,7 +66,7 @@ class Estimator:
             self.trajectory = { 'n_photons_subbin' : []}   
         
 class ThresholdingEstimator(Estimator):
-    def __init__(self, threshold, t_bin):
+    def __init__(self, threshold, t_bin, save_trajectory=False):
         super().__init__(save_trajectory=save_trajectory)
         self.threshold = threshold
         
@@ -271,6 +271,7 @@ class EntropyGainEstimator(Estimator):
             self.trajectory['p_b'] = []
             self.trajectory['n_photons_subbin'] = []
             self.trajectory['pi_pulse'] = []
+            self.trajectory['pulse_success'] = np.array([])
     
         self.estimator_type = "EntropyGain"
         
@@ -326,10 +327,18 @@ class EntropyGainEstimator(Estimator):
         else:
             self.pi_pulse = False
             
-    def pi_pulse_applied(self):
+    def pi_pulse_applied(self, success):
         if not self.ready:
             self.n_pi_pulses+= 1
+            # flip regardless, even if failed
             self.state_flipped = not self.state_flipped
+            # add to trajectory
+            if success:
+                self.trajectory['pulse_success'] = np.append(self.trajectory['pulse_success'], 1)
+            else:
+                self.trajectory['pulse_success'] = np.append(self.trajectory['pulse_success'], -1)
+
+
     
             
     def update_prediction(self, dt_subbin):
@@ -402,6 +411,7 @@ class EntropyGainEstimator(Estimator):
             self.trajectory['p_b'] = []
             self.trajectory['n_photons_subbin'] = []
             self.trajectory['pi_pulse'] = []
+            self.trajectory['pulse_success'] = np.array([])
 
 class MinExpectedBinsEstimator(Estimator):
     def __init__(self, R_D, R_B, e_c, n_subbins_max, save_trajectory=False):
@@ -424,6 +434,7 @@ class MinExpectedBinsEstimator(Estimator):
             self.trajectory['p_b'] = []
             self.trajectory['n_photons_subbin'] = []
             self.trajectory['pi_pulse'] = []
+            self.trajectory['pulse_success'] = np.array([]) # can be empty...
 
 
     def update_likelihoods(self, n_photons, dt):
@@ -487,10 +498,14 @@ class MinExpectedBinsEstimator(Estimator):
             # set subbin photon count to 0 for next bin
             self.n_photons_subbin = 0
 
-    def pi_pulse_applied(self):
+    def pi_pulse_applied(self, success=1):
         if not self.ready:
             self.n_pi_pulses+= 1
             self.state_flipped = not self.state_flipped
+            if success:
+                self.trajectory['pulse_success'] = np.append(self.trajectory['pulse_success'], 1)
+            else:
+                self.trajectory['pulse_success'] = np.append(self.trajectory['pulse_success'], -1)
 
     def update_trajectory(self):
         self.trajectory['n_photons_subbin'] = np.append(self.trajectory['n_photons_subbin'], self.n_photons_subbin)
@@ -522,3 +537,4 @@ class MinExpectedBinsEstimator(Estimator):
             self.trajectory['p_b'] = []
             self.trajectory['n_photons_subbin'] = []
             self.trajectory['pi_pulse'] = []
+            self.trajectory['pulse_success'] = np.array([])
