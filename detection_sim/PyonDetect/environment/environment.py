@@ -3,8 +3,7 @@ import pandas as pd
 import time
 import json
 
-class SimulationEnvironment():
-    
+class SimulationEnvironment(): 
     def __init__(self, ion_list, estimator_list, detection_time=200, n_subbins = 5, n_repetition=100, p_pi_success=1, verbose=False):
         assert len(ion_list) != 0, "Need to pass more than one ion to the environment"
         assert len(estimator_list) != 0, "Need to pass more than estimator to the environment"
@@ -121,7 +120,7 @@ class SimulationEnvironment():
     def _bin_trajectories(self):
         if 'n_photons_subbin_0' in self.__trajectories.keys():
             # the subbin photon count and Pi pulse success indicator should uniquely determine trajectories,
-            # as the estimator is deterministic with respect to the photon counts
+            # as the estimator is deterministic with respect to the photon counts and the general outcome
             trj_photons = self.__trajectories['n_photons_subbin_0']
             if 'pulse_success_0' in self.__trajectories.keys():
                 trj_pi_success = self.__trajectories['pulse_success_0']
@@ -182,12 +181,3 @@ class SimulationEnvironment():
             
     def set_p_pi_pulse(self, p_pi_pulse):
         self.__p_pi_pulse = p_pi_pulse
-        
-        
-            
-        
-            
-        
-        
-        
-    

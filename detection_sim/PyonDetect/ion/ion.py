@@ -98,7 +98,7 @@ class CalciumIon(Ion):
             print(f"mean: {self.poisson_mu}, n photons: {self.photons}")
             
 class BerylliumIon(Ion):
-    def __init__(self, initial_state=0, R_dark= 0.1 / 200, R_bright = 24 / 200, tau_db = (1 / 78.46) * 1e6, tau_bd = (1 / 3.43e2) * 1e6):
+    def __init__(self, initial_state=0, R_dark= 0.1 / 200, R_bright = 26.34 / 200, tau_db = (1 / 78.46) * 1e6, tau_bd = (1 / 3.43e2) * 1e6):
         super().__init__(initial_state, R_dark, R_bright)
         self.tau_db = tau_db
         self.tau_bd = tau_bd
@@ -126,7 +126,7 @@ class BerylliumIon(Ion):
                 ## check if decayed
                 rand = random.random()
                 if (rand < p_decay):
-                    self.state = 1 # change to bright state
+                    self.state = 0 # change to bright state
 
             # bright to dark leakage
             if self.state == 0:
@@ -134,7 +134,7 @@ class BerylliumIon(Ion):
                 ## check if decayed
                 rand = random.random()
                 if (rand < p_decay):
-                    self.state = 3 # shelving state is assumed to be state 3, not taking part in the cycling
+                    self.state = 1 # shelving state is assumed to be state 3, not taking part in the cycling
             t+=dt
             
         if verbose:

@@ -170,8 +170,8 @@ class AdaptiveMLEstimator(Estimator):
                 
     def get_stats(self):
         stats = {'prediction': self.prediction,
-                    'n_subbins': self.n_subbins,
-                    'n_photons_tot': self.n_photons_tot}
+                'n_subbins': self.n_subbins,
+                'n_photons_tot': self.n_photons_tot}
         return stats
     
     def update_trajectory(self):
@@ -328,6 +328,7 @@ class EntropyGainEstimator(Estimator):
             self.pi_pulse = False
             
     def pi_pulse_applied(self, success):
+        self.pi_pulse = False
         if not self.ready:
             self.n_pi_pulses+= 1
             # flip regardless, even if failed
@@ -499,6 +500,7 @@ class MinExpectedBinsEstimator(Estimator):
             self.n_photons_subbin = 0
 
     def pi_pulse_applied(self, success=1):
+        self.pi_pulse = False
         if not self.ready:
             self.n_pi_pulses+= 1
             self.state_flipped = not self.state_flipped
