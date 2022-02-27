@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
     n_bins = np.arange(min_bins, max_bins)
 
-
+    """
     # dark runs
     print("dark, R_D = 0")
     sec = time.time()
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     initial_state = np.repeat(1, len(n_bins))
     R_dark = np.repeat(0.0, len(n_bins))
     path = np.repeat('./outputs/beryllium_test/dark_R_D_0/', len(n_bins))
-    with mp.Pool(mp.cpu_count()) as p:
+    with mp.Pool(mp.cpu_count()-1) as p:
         res = p.starmap(run_environment, zip(n_bins, initial_state, R_dark, path))
 
 
@@ -81,14 +81,14 @@ if __name__ == "__main__":
     with mp.Pool(mp.cpu_count()) as p:
         res = p.starmap(run_environment, zip(n_bins, initial_state, R_dark, path))
 
-
+"""
     # dark runs
     print("dark, R_D = 0.5")
     sec = time.time()
     print(time.ctime(sec))
 
     initial_state = np.repeat(1, len(n_bins))
-    R_dark = np.repeat(0.1/200, len(n_bins))
+    R_dark = np.repeat(0.5/200, len(n_bins))
     path = np.repeat('./outputs/beryllium_test/dark_R_D_0_5/', len(n_bins))
     with mp.Pool(mp.cpu_count()) as p:
         res = p.starmap(run_environment, zip(n_bins, initial_state, R_dark, path))
@@ -100,7 +100,7 @@ if __name__ == "__main__":
     print(time.ctime(sec))
 
     initial_state = np.repeat(0, len(n_bins))
-    R_dark = np.repeat(0.1/200, len(n_bins))
+    R_dark = np.repeat(0.5/200, len(n_bins))
     path = np.repeat('./outputs/beryllium_test/bright_R_D_0_5/', len(n_bins))
     with mp.Pool(mp.cpu_count()) as p:
         res = p.starmap(run_environment, zip(n_bins, initial_state, R_dark, path))

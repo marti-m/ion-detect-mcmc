@@ -103,7 +103,6 @@ class BerylliumIon(Ion):
         self.tau_db = tau_db
         self.tau_bd = tau_bd
 
-
     def update_ion(self, bin_time, dt, verbose=False):
         # simulate ion dynamics using rates
         self.poisson_mu = 0
