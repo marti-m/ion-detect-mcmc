@@ -550,6 +550,7 @@ class HMMMinExpectedBinsEstimator(Estimator):
 
         self.n_subbins_max = n_subbins_max
         self.e_c = e_c
+        self.e_c_factor = np.power(100, 1.0 / self.n_subbins_max)
 
         # posterior
         self.p_d = 0.5
@@ -563,7 +564,6 @@ class HMMMinExpectedBinsEstimator(Estimator):
 
         self.T_1 = np.array([[1 - self.p_bd, self.p_db], [self.p_bd, 1 - self.p_db]])
         self.T_2 = np.array([[1 - self.p_pi_success, self.p_pi_success], [self.p_pi_success, 1 - self.p_pi_success]]) @ self.T_1
-        print(self.T_2)
         self.T_1_T  = np.transpose(self.T_1)
         self.T_2_T = np.transpose(self.T_2)
 
@@ -637,7 +637,7 @@ class HMMMinExpectedBinsEstimator(Estimator):
             e_d = self.p_b / sum_p
             e_b = self.p_d / sum_p
             # check if threshold met
-            if min(e_d, e_b) < self.e_c * 1.2**self.n_subbins:
+            if min(e_d, e_b) < self.e_c * self.e_c_factor**(self.n_subbins-1):
                 self.ready = True
                 if (self.p_d > self.p_b):
                     self.prediction = 1
