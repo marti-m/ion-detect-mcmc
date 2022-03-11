@@ -563,7 +563,8 @@ class HMMMinExpectedBinsEstimator(Estimator):
         self.p_pi_success = p_pi_success
 
         self.T_1 = np.array([[1 - self.p_bd, self.p_db], [self.p_bd, 1 - self.p_db]])
-        self.T_2 = np.array([[1 - self.p_pi_success, self.p_pi_success], [self.p_pi_success, 1 - self.p_pi_success]]) @ self.T_1
+        self.T_pi = np.array([[1 - self.p_pi_success, self.p_pi_success], [self.p_pi_success, 1 - self.p_pi_success]])
+        self.T_2 =  self.T_pi @ self.T_1
         self.T_1_T  = np.transpose(self.T_1)
         self.T_2_T = np.transpose(self.T_2)
 
@@ -596,10 +597,7 @@ class HMMMinExpectedBinsEstimator(Estimator):
 
     def _forward_msg_pass(self):
         y_forward = [[self.y[0, self.bin_idx_max]], [self.y[1, self.bin_idx_max]]]
-        if self.pi_pulse_arr[self.bin_idx_max] == 0:
-            self.mu_forward = np.multiply(self.T_1 @ self.mu_forward, y_forward)
-        else:
-            self.mu_forward = np.multiply(self.T_2 @ self.mu_forward, y_forward)
+        self.mu_forward = self.T_1 @ np.multiply(self.mu_forward, y_forward)
 
 
     def _backward_msg_pass(self):
@@ -611,6 +609,7 @@ class HMMMinExpectedBinsEstimator(Estimator):
                 mu_n = np.multiply(self.T_1_T @ mu_n, y_backward)
             else:
                 mu_n = np.multiply(self.T_2_T @ mu_n, y_backward)
+        
         
         self.p_b = mu_n[0][0]
         self.p_d = mu_n[1][0]
@@ -663,6 +662,7 @@ class HMMMinExpectedBinsEstimator(Estimator):
 
     def pi_pulse_applied(self, success=1):
         self.pi_pulse = False
+        self.mu_forward = self.T_pi @ self.mu_forward
         if not self.ready:
             self.n_pi_pulses+= 1
             if self.save_trajectory:
