@@ -288,11 +288,17 @@ class EntropyGainEstimator(Estimator):
     def get_entropy(self, p_1, p_2):
         # the entropy is a measure for the randomness/uncertainty of an outcome/observation
         # For a discrete probability distribution with m outcomes, the entropy is maximized for a uniform distribution (e.g P(x) = 1 / m for all x in (1, ..., m))
-        return entropy([p_1, p_2])
+        return entropy([p_1, p_2], base=2)
     
     def get_probabilities(self, p_1, p_2):
         s = p_1 + p_2
-        return p_1 / s, p_2 / s
+
+        # check for "NuMeRiCal IsSueS"
+        if (s == 0):
+            print('yikes')
+            return 0, 1 # order 0 and 1 is random, entropy is the same for both orders =)
+        else:
+            return p_1 / s, p_2 / s
             
         
     def is_pi_pulse_needed(self, dt):
@@ -302,13 +308,20 @@ class EntropyGainEstimator(Estimator):
             # calculate poisson means for subbin assuming state does not change during bin time
             mean_b = (self.R_D + self.R_B) * dt
             mean_d = self.R_D * dt
-            # calculate the possible likelihoods for every photon count if we do not apply a Pi pulse
-            rho_b_i = self.p_b * poisson.pmf(i, mean_b)
-            rho_d_i = self.p_d * poisson.pmf(i, mean_d)
             
-            # calculate the possible likelihoods for every photon count if we DO apply a Pi pulse
-            rho_b_pi_i = self.p_b * poisson.pmf(i, mean_d)
-            rho_d_pi_i = self.p_d * poisson.pmf(i, mean_b)
+            if not self.state_flipped:
+                # calculate the possible likelihoods for every photon count if we do not apply a Pi pulse
+                rho_b_i = self.p_b * poisson.pmf(i, mean_b)
+                rho_d_i = self.p_d * poisson.pmf(i, mean_d)
+                # calculate the possible likelihoods for every photon count if we DO apply a Pi pulse
+                rho_b_pi_i = self.p_b * poisson.pmf(i, mean_d)
+                rho_d_pi_i = self.p_d * poisson.pmf(i, mean_b)
+            else:
+                rho_b_i = self.p_b * poisson.pmf(i, mean_d)
+                rho_d_i = self.p_d * poisson.pmf(i, mean_b)
+           
+                rho_b_pi_i = self.p_b * poisson.pmf(i, mean_b)
+                rho_d_pi_i = self.p_d * poisson.pmf(i, mean_d)
             
             # calculate the associated probabilities (normalize such that probabilities add to one)
             p_d_i, p_b_i = self.get_probabilities(rho_d_i, rho_b_i)
@@ -545,12 +558,17 @@ class MinExpectedBinsEstimator(Estimator):
 
 class HMMMinExpectedBinsEstimator(Estimator):
 
-    def __init__(self, R_D, R_B, tau_db, tau_bd, e_c, t_det, n_subbins_max, p_pi_success=1, save_trajectory=False):
+    def __init__(self, R_D, R_B, tau_db, tau_bd, e_c, t_det, n_subbins_max, p_pi_success=1, exp_threshold=True, save_trajectory=False):
         super().__init__(save_trajectory=save_trajectory)
 
         self.n_subbins_max = n_subbins_max
         self.e_c = e_c
-        self.e_c_factor = np.power(100, 1.0 / self.n_subbins_max)
+        if exp_threshold:
+            # set the factor such that at the last possible sub-bin, this estimator arrives at the max sub-bin abort criterion (returning the more likely)
+            self.e_c_factor = np.power(0.5 / self.e_c, 1.0 / self.n_subbins_max)
+        else:
+            # do not increase the threshold
+            self.e_c_factor = 1
 
         # posterior
         self.p_d = 0.5
