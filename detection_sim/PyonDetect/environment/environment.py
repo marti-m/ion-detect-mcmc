@@ -127,7 +127,7 @@ class SimulationEnvironment():
                 # hash the numpy arrays of the subbin photon count to get a unique identifier
                 trj_hash = np.array([hash(np.append(trj_photon_i, trj_pi_success_i).tobytes()) for trj_photon_i, trj_pi_success_i in zip(trj_photons, trj_pi_success)])
             else:
-                trj_hash = np.array([hash(trj_photon_i) for trj_photon_i in trj_photons])
+                trj_hash = np.array([hash(trj_photon_i.tobytes()) for trj_photon_i in trj_photons])
 
 
             # get unique hashes and counts, and sort them

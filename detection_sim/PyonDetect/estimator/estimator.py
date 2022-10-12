@@ -563,6 +563,7 @@ class HMMMinExpectedBinsEstimator(Estimator):
 
         self.n_subbins_max = n_subbins_max
         self.e_c = e_c
+        self.e_c_start = e_c
         if exp_threshold:
             # set the factor such that at the last possible sub-bin, this estimator arrives at the max sub-bin abort criterion (returning the more likely)
             self.e_c_factor = np.power(0.5 / self.e_c, 1.0 / self.n_subbins_max)
@@ -654,7 +655,7 @@ class HMMMinExpectedBinsEstimator(Estimator):
             e_d = self.p_b / sum_p
             e_b = self.p_d / sum_p
             # check if threshold met
-            if min(e_d, e_b) < self.e_c * self.e_c_factor**(self.n_subbins-1):
+            if min(e_d, e_b) < self.e_c:
                 self.ready = True
                 if (self.p_d > self.p_b):
                     self.prediction = 1
@@ -663,6 +664,8 @@ class HMMMinExpectedBinsEstimator(Estimator):
             else:
                 # check if the entropy of the likelihood function averaged over all/most future outcomes is greater if we applied a Pi pulse
                 self.is_pi_pulse_needed()
+                # multiply threshold by given factor
+                self.e_c*=self.e_c_factor
             
             if (self.n_subbins >= self.n_subbins_max):
                 self.ready = True
@@ -709,6 +712,7 @@ class HMMMinExpectedBinsEstimator(Estimator):
         
         self.p_b = 0.5
         self.p_d = 0.5
+        self.e_c = self.e_c_start
         
         self.n_subbins = 0
         self.n_pi_pulses = 0
