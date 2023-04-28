@@ -9,7 +9,7 @@ import time
 
 def run_environment_ideal_hmm(n_bins, initial_state, R_D, path):
     R_B = 25 / 200 # per us
-    e_c = 1e-4
+    e_c = 1 - 0.996
     t_detection = 200
     ions = [Ion(initial_state, R_dark=R_D, R_bright=R_B) for i in range(1)]
     estimator = HMMMinExpectedBinsEstimator(R_D=R_D, R_B=R_B, tau_db = 1e30, tau_bd = 1e30, e_c=e_c, t_det=t_detection, n_subbins_max=n_bins, save_trajectory=False)
@@ -32,7 +32,7 @@ def run_environment_beryllium_hmm(n_bins, initial_state, R_D, path):
 def run_environment_pi_success_hmm(initial_state, p_success, R_D, path):
     n_bins = 20
     R_B = 25 / 200 # per us
-    e_c = 1e-4
+    e_c = 1 - 0.996
     t_detection = 200
     ion = Ion(initial_state, R_dark=R_D, R_bright=R_B)
     estimator = HMMMinExpectedBinsEstimator(R_D=R_D, R_B=R_B, tau_db = 1e30, tau_bd = 1e30, e_c=e_c, p_pi_success=p_success, t_det=t_detection, n_subbins_max=n_bins, save_trajectory=False)
@@ -82,7 +82,6 @@ if __name__ == "__main__":
     # ---------------------------------------------ideal--------------------------------------------------
     # ----------------------------------------------------------------------------------------------------
     # dark runs
-    """
     print("ideal, HMM, dark, R_D = 0.0")
     sec = time.time()
     print(time.ctime(sec))
@@ -128,7 +127,6 @@ if __name__ == "__main__":
     path = np.repeat('./outputs/hmm/ideal_bk/bright_R_D_0_5/', len(n_bins))
     with mp.Pool(mp.cpu_count()) as p:
         res = p.starmap(run_environment_ideal_hmm, zip(n_bins, initial_state, R_dark, path))
-    """
     # ----------------------------------------------------------------------------------------------------
     # ---------------------------------------------Beryllium----------------------------------------------
     # ----------------------------------------------------------------------------------------------------
@@ -184,7 +182,6 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------------------------------------
     # ---------------------------------------------Pi success --------------------------------------------
     # ----------------------------------------------------------------------------------------------------
-    """
     # dark runs
     print("pi_success, HMM, dark, R_D = 0.0")
     sec = time.time()
@@ -229,7 +226,6 @@ if __name__ == "__main__":
     with mp.Pool(mp.cpu_count()) as p:
         res = p.starmap(run_environment_pi_success_hmm, zip(initial_state, p_success, R_dark, path))
 
-    """
     # ----------------------------------------------------------------------------------------------------
     # -------------------------------------------HMM no_exp-----------------------------------------------
     # ----------------------------------------------------------------------------------------------------
@@ -237,7 +233,6 @@ if __name__ == "__main__":
     # ---------------------------------------------ideal--------------------------------------------------
     # ----------------------------------------------------------------------------------------------------
     # dark runs
-    """
     print("ideal, HMM, dark, R_D = 0.0")
     sec = time.time()
     print(time.ctime(sec))
@@ -334,4 +329,3 @@ if __name__ == "__main__":
     path = np.repeat('./outputs/hmm_no_exp/beryllium/bright_R_D_0_5/', len(n_bins))
     with mp.Pool(mp.cpu_count()) as p:
         res = p.starmap(run_environment_beryllium_hmm_no_exp, zip(n_bins, initial_state, R_dark, path))
-"""

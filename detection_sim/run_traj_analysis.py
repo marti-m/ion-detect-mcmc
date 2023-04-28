@@ -10,19 +10,19 @@ import time
 def run_environment_traj_analysis(estimator, initial_state, path_estimator):
     path_root = './outputs/'
     if initial_state == 0:
-        path_test = 'traj_analysis/bright/'
+        path_test = 'traj_analysis/bright_bkd/'
     else:
-        path_test = 'traj_analysis/dark/'
+        path_test = 'traj_analysis/dark_bkd/'
     n_bins = 20
 
     R_B = 25.0 / 200 # per us
-    R_D = 0.0 / 200 # per us
+    R_D = 0.5 / 200 # per us
     e_c = 1e-4
     t_detection = 200 # us
 
     ions = [Ion(initial_state, R_dark=R_D, R_bright=R_B) for i in range(1)]
     estimators = [estimator]
-    env = SimulationEnvironment(ions, estimators, detection_time=t_detection, n_subbins=n_bins, n_repetition=20000)
+    env = SimulationEnvironment(ions, estimators, detection_time=t_detection, n_subbins=n_bins, n_repetition=100000)
     env.run()
     env.save_to_csv(path_root + path_estimator + path_test)
     env.save_to_json(path_root + path_estimator + path_test)
@@ -40,17 +40,18 @@ if __name__ == "__main__":
     p_success = 1
 
     R_B = 25.0 / 200 # per us
-    R_D = 0.0 / 200 # per us
+    R_D = 0.5 / 200 # per us
     e_c = 1e-4
     t_detection = 200 # us
 
-    path_est = ['entropy_gain/', 'aml/', 'minbins/', 'hmm/']
+    path_est = ['entropy_gain/', 'aml/', 'minbins/', 'hmm_no_exp/', 'hmm/']
 
 
     estimators = [EntropyGainEstimator(R_D=R_D, R_B=R_B, e_c=e_c, n_subbins_max=n_bins, n_counts_max=10, save_trajectory=True),
                 AdaptiveMLEstimator(R_D=R_D, R_B=R_B, e_c=e_c, n_subbins_max=n_bins, save_trajectory=True),
                 MinExpectedBinsEstimator(R_D=R_D, R_B=R_B, e_c=e_c, n_subbins_max=n_bins, save_trajectory=True),
-                HMMMinExpectedBinsEstimator(R_D=R_D, R_B=R_B, tau_db = 1e30, tau_bd = 1e30, e_c=e_c, t_det=t_detection, n_subbins_max=n_bins, save_trajectory=True)]
+                HMMMinExpectedBinsEstimator(R_D=R_D, R_B=R_B, tau_db = 1e30, tau_bd = 1e30, e_c=e_c, t_det=t_detection, n_subbins_max=n_bins, exp_threshold=False, save_trajectory=True),
+                HMMMinExpectedBinsEstimator(R_D=R_D, R_B=R_B, tau_db = 1e30, tau_bd = 1e30, e_c=1 - 0.996, t_det=t_detection, n_subbins_max=n_bins, exp_threshold=True, save_trajectory=True)]
 
     # bright runs
     print("bright, R_D = 0")
